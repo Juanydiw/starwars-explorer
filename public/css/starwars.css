@@ -1,0 +1,175 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+body {
+    background: #0a0a0a;
+    color: #fff;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: auto;
+}
+
+h1 {
+    text-align: center;
+    color: #ffe81f;
+    margin-bottom: 25px;
+    text-shadow: 0 0 10px #ffe81f;
+}
+
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+button {
+    cursor: pointer;
+    border: none;
+    transition: .3s;
+}
+
+.tab-btn {
+    padding: 12px 20px;
+    background: #1c1c1c;
+    color: white;
+    border-radius: 8px;
+}
+
+.tab-btn:hover {
+    background: #333;
+}
+
+.tab-btn.active {
+    background: #ffe81f;
+    color: black;
+    font-weight: bold;
+}
+
+#searchInput {
+    width: 100%;
+    max-width: 400px;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background: #1e1e1e;
+    color: white;
+}
+
+.filter-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.filter-btn {
+    background: #252525;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 20px;
+}
+
+.filter-btn.active {
+    background: #ffe81f;
+    color: black;
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
+}
+
+.card {
+    background: #151515;
+    border: 1px solid #2e2e2e;
+    border-radius: 12px;
+    padding: 20px;
+    transition: .3s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    border-color: #ffe81f;
+    box-shadow: 0 0 15px rgba(255, 232, 31, .3);
+}
+
+.card h3 {
+    color: #ffe81f;
+    margin-bottom: 10px;
+}
+
+.card p {
+    margin: 5px 0;
+    color: #ddd;
+}
+
+.loader {
+    display: none;
+    text-align: center;
+    margin: 40px;
+}
+
+.spinner {
+    width: 60px;
+    height: 60px;
+    border: 5px solid #333;
+    border-top: 5px solid #ffe81f;
+    border-radius: 50%;
+    margin: auto;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.error-box {
+    display: none;
+    background: #3b0000;
+    border: 1px solid red;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    margin: 20px 0;
+}
+
+.error-box button {
+    margin-top: 10px;
+    background: #ffe81f;
+    padding: 10px 20px;
+    border-radius: 8px;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 25px;
+}
+
+.pagination button {
+    background: #ffe81f;
+    color: black;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: bold;
+}
+
+.pagination button:disabled {
+    opacity: .4;
+    cursor: not-allowed;
+}
