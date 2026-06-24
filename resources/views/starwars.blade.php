@@ -40,7 +40,7 @@
 
     <!-- Modal Agregar -->
     <div id="addModal" class="modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); align-items:center; justify-content:center;">
-        <div class="modal-box" style="background:#0f0f0f; padding:20px; border-radius:12px; width:420px; border:1px solid #2e2e2e;">
+        <div class="modal-box" style="background:#0f0f0f; padding:20px; border-radius:12px; width:420px; max-height:80vh; overflow:auto; border:1px solid #2e2e2e;">
             <h3 id="modalTitle" style="color:#ffe81f; margin-bottom:10px">➕ Agregar ítem</h3>
             <form id="addForm">
                 <label style="display:block; margin-bottom:6px">Categoría</label>
@@ -54,7 +54,7 @@
 
                 <label style="display:block; margin:8px 0 6px">Foto (opcional)</label>
                 <input type="file" id="itemImage" accept="image/*" style="width:100%; padding:6px; margin-bottom:8px; background:#1e1e1e; color:#fff; border:none" />
-                <img id="itemImagePreview" src="" alt="Preview" style="display:none; max-width:100%; border-radius:8px; margin-bottom:8px;" />
+                <img id="itemImagePreview" src="" alt="Preview" style="display:none; max-width:100%; max-height:240px; object-fit:cover; border-radius:8px; margin-bottom:8px;" />
 
                 <div id="peopleFields">
                     <input type="text" id="itemGender" placeholder="Género" style="width:100%; padding:8px; margin-bottom:8px; border-radius:8px; background:#1e1e1e; color:#fff; border:none" />
