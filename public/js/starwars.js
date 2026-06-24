@@ -45,6 +45,29 @@ function isItemDeleted(item, entity) {
     return loadDeletedItems(entity).includes(id);
 }
 
+// overrides for edited API items
+function loadOverrides(entity) {
+    try {
+        const raw = localStorage.getItem('custom_sw_overrides');
+        if (!raw) return {};
+        const obj = JSON.parse(raw);
+        return obj[entity] || {};
+    } catch (e) {
+        return {};
+    }
+}
+
+function saveOverride(entity, id, data) {
+    const raw = localStorage.getItem('custom_sw_overrides');
+    let obj = {};
+    if (raw) {
+        try { obj = JSON.parse(raw); } catch (e) { obj = {}; }
+    }
+    if (!obj[entity]) obj[entity] = {};
+    obj[entity][id] = data;
+    localStorage.setItem('custom_sw_overrides', JSON.stringify(obj));
+}
+
 const loader = document.getElementById("loader");
 const errorBox = document.getElementById("errorBox");
 const filtersContainer = document.getElementById("filters");
@@ -52,6 +75,12 @@ const addBtn = document.getElementById('addBtn');
 const addModal = document.getElementById('addModal');
 const cancelAdd = document.getElementById('cancelAdd');
 const addForm = document.getElementById('addForm');
+const modalTitle = document.getElementById('modalTitle');
+const saveBtn = document.getElementById('saveBtn');
+
+let editMode = false;
+let editEntity = null;
+let editId = null;
 
 
 // ==========================
@@ -102,7 +131,15 @@ async function fetchData(entity, page, triedUrls = []) {
         // cargar items locales para esta entidad
         const local = loadLocalItems(entity);
         currentData = [...local, ...currentData];
-        currentData = currentData.filter(item => !isItemDeleted(item, entity));
+        // aplicar overrides y filtrado por eliminados
+        const overrides = loadOverrides(entity);
+        currentData = currentData.map(item => {
+            const id = getItemId(item, entity);
+            if (overrides[id]) {
+                return { ...item, ...overrides[id], _overridden: true };
+            }
+            return item;
+        }).filter(item => !isItemDeleted(item, entity));
         filteredData = [...currentData];
 
         renderFilters();
@@ -183,6 +220,18 @@ function renderCards(data) {
             const p3 = document.createElement('p'); p3.innerHTML = `<b>Velocidad:</b> ${item.max_atmosphering_speed}`; card.appendChild(p3);
         }
 
+        // Edit button
+        const editBtn = document.createElement('button');
+        editBtn.textContent = 'Editar';
+        editBtn.className = 'tab-btn';
+        editBtn.style.marginTop = '8px';
+        editBtn.style.marginRight = '8px';
+        editBtn.addEventListener('click', () => {
+            openEditModal(item, currentEntity);
+        });
+        card.appendChild(editBtn);
+
+        // Delete button
         const delBtn = document.createElement('button');
         delBtn.textContent = 'Eliminar';
         delBtn.className = 'btn-red';
@@ -247,19 +296,114 @@ function deleteItem(entity, item) {
     applyFilters();
 }
 
+// Global edit helpers (available outside form block)
+function openEditModal(item, entity) {
+    editMode = true;
+    editEntity = entity;
+    editId = getItemId(item, entity);
+    if (modalTitle) modalTitle.textContent = '✏️ Editar ítem';
+    if (saveBtn) saveBtn.textContent = 'Guardar cambios';
+
+    // set category select
+    if (itemCategory) {
+        itemCategory.value = entity;
+        itemCategory.dispatchEvent(new Event('change'));
+    }
+
+    if (document.getElementById('itemName')) document.getElementById('itemName').value = item.name || '';
+    if (entity === 'people') {
+        if (document.getElementById('itemGender')) document.getElementById('itemGender').value = item.gender || '';
+        if (document.getElementById('itemHeight')) document.getElementById('itemHeight').value = item.height || '';
+        if (document.getElementById('itemMass')) document.getElementById('itemMass').value = item.mass || '';
+    }
+    if (entity === 'planets') {
+        if (document.getElementById('itemClimate')) document.getElementById('itemClimate').value = item.climate || '';
+        if (document.getElementById('itemPopulation')) document.getElementById('itemPopulation').value = item.population || '';
+        if (document.getElementById('itemTerrain')) document.getElementById('itemTerrain').value = item.terrain || '';
+    }
+    if (entity === 'starships') {
+        if (document.getElementById('itemModel')) document.getElementById('itemModel').value = item.model || '';
+        if (document.getElementById('itemClass')) document.getElementById('itemClass').value = item.starship_class || '';
+        if (document.getElementById('itemSpeed')) document.getElementById('itemSpeed').value = item.max_atmosphering_speed || '';
+    }
+
+    const itemImagePreview = document.getElementById('itemImagePreview');
+    if (itemImagePreview) {
+        if (item.image) {
+            itemImagePreview.src = item.image;
+            itemImagePreview.style.display = 'block';
+        } else {
+            itemImagePreview.style.display = 'none';
+            itemImagePreview.src = '';
+        }
+    }
+
+    if (addModal) addModal.style.display = 'flex';
+}
+
+function applyEdit(entity, id, fields) {
+    // update local item if present
+    const localRaw = localStorage.getItem('custom_sw_items');
+    if (localRaw) {
+        try {
+            const obj = JSON.parse(localRaw);
+            if (obj[entity]) {
+                const idx = obj[entity].findIndex(x => getItemId(x, entity) === id);
+                if (idx !== -1) {
+                    obj[entity][idx] = { ...obj[entity][idx], ...fields };
+                    localStorage.setItem('custom_sw_items', JSON.stringify(obj));
+                    // update currentData
+                    currentData = currentData.map(x => getItemId(x, entity) === id ? { ...x, ...fields } : x);
+                    applyFilters();
+                    resetEditState();
+                    return;
+                }
+            }
+        } catch (e) {}
+    }
+
+    // otherwise save as override for API items
+    saveOverride(entity, id, fields);
+    currentData = currentData.map(x => getItemId(x, entity) === id ? { ...x, ...fields, _overridden: true } : x);
+    applyFilters();
+    resetEditState();
+}
+
+function resetEditState() {
+    editMode = false;
+    editEntity = null;
+    editId = null;
+    if (modalTitle) modalTitle.textContent = '➕ Agregar ítem';
+    if (saveBtn) saveBtn.textContent = 'Guardar';
+    if (addModal) addModal.style.display = 'none';
+    if (addForm) addForm.reset();
+    const itemImagePreview = document.getElementById('itemImagePreview');
+    if (itemImagePreview) { itemImagePreview.style.display = 'none'; itemImagePreview.src = ''; }
+    if (itemCategory) itemCategory.dispatchEvent(new Event('change'));
+}
+
 // ==========================
 // Interacciones del modal Agregar
 // ==========================
 
 if (addBtn) {
     addBtn.addEventListener('click', () => {
+        // prepare modal for adding a new item
+        editMode = false;
+        modalTitle.textContent = '➕ Agregar ítem';
+        saveBtn.textContent = 'Guardar';
+        addForm.reset();
+        const itemImagePreview = document.getElementById('itemImagePreview');
+        if (itemImagePreview) { itemImagePreview.style.display = 'none'; itemImagePreview.src = ''; }
+        itemCategory.value = 'people';
+        itemCategory.dispatchEvent(new Event('change'));
         addModal.style.display = 'flex';
     });
 }
 
 if (cancelAdd) {
     cancelAdd.addEventListener('click', () => {
-        addModal.style.display = 'none';
+        resetEditState();
     });
 }
 
@@ -302,24 +446,25 @@ if (addForm) {
 
         if (!name) return alert('Nombre requerido');
 
-        let item = { name, _local: true, _id: Date.now().toString() };
+        // collect form fields into an object
+        const data = { name };
 
         if (cat === 'people') {
-            item.gender = document.getElementById('itemGender').value || 'n/a';
-            item.height = document.getElementById('itemHeight').value || 'n/a';
-            item.mass = document.getElementById('itemMass').value || 'n/a';
+            data.gender = document.getElementById('itemGender').value || 'n/a';
+            data.height = document.getElementById('itemHeight').value || 'n/a';
+            data.mass = document.getElementById('itemMass').value || 'n/a';
         }
 
         if (cat === 'planets') {
-            item.climate = document.getElementById('itemClimate').value || 'n/a';
-            item.population = document.getElementById('itemPopulation').value || 'n/a';
-            item.terrain = document.getElementById('itemTerrain').value || 'n/a';
+            data.climate = document.getElementById('itemClimate').value || 'n/a';
+            data.population = document.getElementById('itemPopulation').value || 'n/a';
+            data.terrain = document.getElementById('itemTerrain').value || 'n/a';
         }
 
         if (cat === 'starships') {
-            item.model = document.getElementById('itemModel').value || 'n/a';
-            item.starship_class = document.getElementById('itemClass').value || 'n/a';
-            item.max_atmosphering_speed = document.getElementById('itemSpeed').value || 'n/a';
+            data.model = document.getElementById('itemModel').value || 'n/a';
+            data.starship_class = document.getElementById('itemClass').value || 'n/a';
+            data.max_atmosphering_speed = document.getElementById('itemSpeed').value || 'n/a';
         }
 
         // handle optional image file (async)
@@ -327,15 +472,27 @@ if (addForm) {
         if (file) {
             const reader = new FileReader();
             reader.onload = function(ev) {
-                item.image = ev.target.result; // base64 data URL
-                finalizeSave(cat, item);
+                data.image = ev.target.result; // base64 data URL
+                if (editMode) {
+                    applyEdit(editEntity || cat, editId, data);
+                } else {
+                    const item = { ...data, _local: true, _id: Date.now().toString() };
+                    finalizeSave(cat, item);
+                }
             };
             reader.readAsDataURL(file);
         } else {
-            finalizeSave(cat, item);
+            if (editMode) {
+                applyEdit(editEntity || cat, editId, data);
+            } else {
+                const item = { ...data, _local: true, _id: Date.now().toString() };
+                finalizeSave(cat, item);
+            }
         }
 
     });
+
+    
 }
 
 function finalizeSave(cat, item) {

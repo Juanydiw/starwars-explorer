@@ -41,7 +41,7 @@
     <!-- Modal Agregar -->
     <div id="addModal" class="modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); align-items:center; justify-content:center;">
         <div class="modal-box" style="background:#0f0f0f; padding:20px; border-radius:12px; width:420px; border:1px solid #2e2e2e;">
-            <h3 style="color:#ffe81f; margin-bottom:10px">➕ Agregar ítem</h3>
+            <h3 id="modalTitle" style="color:#ffe81f; margin-bottom:10px">➕ Agregar ítem</h3>
             <form id="addForm">
                 <label style="display:block; margin-bottom:6px">Categoría</label>
                 <select id="itemCategory" style="width:100%; padding:8px; margin-bottom:10px; border-radius:8px; background:#1e1e1e; color:#fff; border:none">
@@ -76,7 +76,7 @@
 
                 <div style="display:flex; gap:8px; justify-content:flex-end">
                     <button type="button" id="cancelAdd" class="tab-btn">Cancelar</button>
-                    <button type="submit" class="tab-btn active">Guardar</button>
+                    <button type="submit" class="tab-btn active" id="saveBtn">Guardar</button>
                 </div>
             </form>
         </div>
