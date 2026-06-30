@@ -9,32 +9,44 @@ class CharacterController extends Controller
 {
     public function index()
     {
-        $characters = Character::all();
-        return view('characters.index', compact('characters'));
+        return response()->json(Character::latest()->get());
     }
 
     public function store(Request $request)
     {
-        $request->validate([
-            'name'   => 'required',
-            'gender' => 'required',
-            'height' => 'required',
-            'mass'   => 'required',
+        $validated = $request->validate([
+            'name'   => 'required|string|max:255',
+            'gender' => 'nullable|string|max:255',
+            'height' => 'nullable|string|max:255',
+            'mass'   => 'nullable|string|max:255',
+            'image'  => 'nullable|string',
         ]);
 
-        Character::create([
-            'name'   => $request->name,
-            'gender' => $request->gender,
-            'height' => $request->height,
-            'mass'   => $request->mass,
+        $character = Character::create($validated);
+
+        return response()->json($character, 201);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $character = Character::findOrFail($id);
+
+        $validated = $request->validate([
+            'name'   => 'required|string|max:255',
+            'gender' => 'nullable|string|max:255',
+            'height' => 'nullable|string|max:255',
+            'mass'   => 'nullable|string|max:255',
+            'image'  => 'nullable|string',
         ]);
 
-        return redirect()->route('characters.index');
+        $character->update($validated);
+
+        return response()->json($character);
     }
 
     public function destroy($id)
     {
         Character::findOrFail($id)->delete();
-        return redirect()->route('characters.index');
+        return response()->json(['ok' => true]);
     }
 }
